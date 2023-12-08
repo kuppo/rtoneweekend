@@ -41,9 +41,9 @@ fn main() {
     let mut cache: Vec<u8> = vec![];
     cache.reserve(width * height * 3);
 
-    for i in 0..width {
-        for j in 0..height {
-            let pixel_center = pixel00loc + i as f64 * delta_u + j as f64 * delta_v;
+    for i in 0..height {
+        for j in 0..width {
+            let pixel_center = pixel00loc + j as f64 * delta_u + i as f64 * delta_v;
             let ray_direction = pixel_center - camera_center;
             let color = ray_color(&Ray::new(camera_center, ray_direction));
             write_color(&color, &mut cache);
