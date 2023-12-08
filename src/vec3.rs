@@ -24,6 +24,24 @@ impl Vec3 {
             k: self.i * rhs.j - self.j * rhs.i,
         }
     }
+
+    pub fn length_pow2(&self) -> f64 {
+        self.i * self.i + self.j * self.j + self.k * self.k
+    }
+
+    pub fn length(&self) -> f64 {
+        (self.i * self.i + self.j * self.j + self.k * self.k).sqrt()
+    }
+
+    pub fn unit_vector(self) -> Vec3 {
+        let length = self.length();
+
+        Vec3 {
+            i: self.i / length,
+            j: self.j / length,
+            k: self.k / length,
+        }
+    }
 }
 
 pub type Point = Vec3;
@@ -171,5 +189,27 @@ mod tests {
         let v3 = v1.cross(v2);
 
         assert!(v3.i == -1.0 && v3.j == -4.0 && v3.k == 3.0);
+    }
+
+    #[test]
+    fn test_length_pow2() {
+        let v1 = Vec3::new(1.0, 2.0, 2.0);
+
+        assert!(v1.length_pow2() == 9.0);
+    }
+
+    #[test]
+    fn test_length() {
+        let v1 = Vec3::new(2.0, 3.0, 6.0);
+
+        assert!(v1.length() == 7.0);
+    }
+
+    #[test]
+    fn test_unit_vector() {
+        let v1 = Vec3::new(4.0, 4.0, 7.0);
+        let v2 = v1.unit_vector();
+
+        assert!(v2.i == 4.0 / 9.0 && v2.j == 4.0 / 9.0 && v2.k == 7.0 / 9.0);
     }
 }

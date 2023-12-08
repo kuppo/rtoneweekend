@@ -66,7 +66,10 @@ fn main() {
 }
 
 fn ray_color(r: &Ray) -> Rgb {
-    Rgb::white()
+    let unit_dir = r.dir().unit_vector();
+    let a = 0.5 * (unit_dir.j + 1.0);
+    (1.0 - a) * Rgb::white() + a * Rgb::new(0.5, 0.7, 1.0)
+    // Rgb::new(0.0, 0.0, 0.0)
 }
 
 fn write_color(color: &Rgb, cache: &mut Vec<u8>) {
