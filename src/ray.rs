@@ -1,14 +1,19 @@
 use crate::vec3::{Point, Vec3};
 
 pub struct Ray {
-    origin: Point,
-    direction: Vec3,
+    pub origin: Point,
+    pub direction: Vec3,
 }
 
 impl Ray {
     pub fn new(origin: Point, direction: Vec3) -> Ray {
         Ray { origin, direction }
     }
+
+    pub fn origin(&self) -> Point {
+        self.origin
+    }
+
     pub fn dir(&self) -> Vec3 {
         self.direction
     }

@@ -66,6 +66,9 @@ fn main() {
 }
 
 fn ray_color(r: &Ray) -> Rgb {
+    if hit_sphere(r, Point::new(0.0, 0.0, -1.0), 0.5) {
+        return Rgb::new(1.0, 0.0, 0.0);
+    }
     let unit_dir = r.dir().unit_vector();
     let a = 0.5 * (unit_dir.j + 1.0);
     (1.0 - a) * Rgb::white() + a * Rgb::new(0.5, 0.7, 1.0)
@@ -76,4 +79,13 @@ fn write_color(color: &Rgb, cache: &mut Vec<u8>) {
     cache.push((color.r * 255.0) as u8);
     cache.push((color.g * 255.0) as u8);
     cache.push((color.b * 255.0) as u8);
+}
+
+fn hit_sphere(ray: &Ray, center: Point, radius: f64) -> bool {
+    let ac = ray.origin() - center;
+    let a = ray.dir().dot(ray.dir());
+    let b = 2.0 * ac.dot(ray.dir());
+    let c = ac.dot(ac) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant >= 0.0
 }
