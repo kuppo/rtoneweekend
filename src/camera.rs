@@ -17,6 +17,7 @@ pub struct CameraConfig {
     pub viewport_height: f64,
     pub samples_per_pixel: usize,
     pub max_depth: usize,
+    pub float_correction: f64,
 }
 
 impl Default for CameraConfig {
@@ -27,6 +28,7 @@ impl Default for CameraConfig {
             viewport_height: 2.0,
             samples_per_pixel: 10,
             max_depth: 20,
+            float_correction: 0.0001,
         }
     }
 }
@@ -49,6 +51,7 @@ pub struct Camera {
     cache: Vec<u8>,
     samples_per_pixel: usize,
     max_depth: usize,
+    float_correction: f64,
 }
 
 impl Camera {
@@ -101,6 +104,7 @@ impl Camera {
             cache,
             samples_per_pixel: config.samples_per_pixel,
             max_depth: config.max_depth,
+            float_correction: config.float_correction,
         }
     }
 
@@ -150,7 +154,7 @@ impl Camera {
             return Rgb::new(0.0, 0.0, 0.0);
         }
 
-        match world.hit(r, 0.0, INFINITY) {
+        match world.hit(r, self.float_correction, INFINITY) {
             Some(hit_record) => {
                 let v = Vec3::random_unit_on_hemisphere(random_generator, hit_record.normal);
                 0.5 * Rgb::from(self.ray_color(
