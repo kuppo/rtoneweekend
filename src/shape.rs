@@ -1,7 +1,7 @@
 use crate::{
     hittable::{HitRecord, Hittable},
     ray::Ray,
-    vec3::Point,
+    vec3::{Point, Vec3},
 };
 
 pub struct Sphere {
@@ -30,10 +30,16 @@ impl Hittable for Sphere {
             }
         }
         let intersection = ray.at(root);
-        Some(HitRecord {
+        let outside_normal = (intersection - self.origin).unit_vector();
+        let mut tmp = HitRecord {
             intersection,
             t: root,
-            normal: (intersection - self.center).unit_vector(),
-        })
+            normal: Vec3::new(0.0, 0.0, 0.0),
+            out_facing: false,
+        };
+
+        tmp.set_outside_normal(ray, outside_normal);
+
+        Some(HitRecord { ..tmp })
     }
 }
