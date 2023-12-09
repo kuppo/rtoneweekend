@@ -16,6 +16,7 @@ pub struct CameraConfig {
     pub width: usize,
     pub viewport_height: f64,
     pub samples_per_pixel: usize,
+    pub max_depth: usize,
 }
 
 impl Default for CameraConfig {
@@ -25,6 +26,7 @@ impl Default for CameraConfig {
             width: 800,
             viewport_height: 2.0,
             samples_per_pixel: 10,
+            max_depth: 20,
         }
     }
 }
@@ -46,6 +48,7 @@ pub struct Camera {
     indicator_bar: ProgressBar,
     cache: Vec<u8>,
     samples_per_pixel: usize,
+    max_depth: usize,
 }
 
 impl Camera {
@@ -97,6 +100,7 @@ impl Camera {
             indicator_bar,
             cache,
             samples_per_pixel: config.samples_per_pixel,
+            max_depth: config.max_depth,
         }
     }
 
@@ -113,6 +117,7 @@ impl Camera {
                             &self.get_ray(pixel_center, random_generator),
                             &world,
                             random_generator,
+                            self.max_depth,
                         );
                 }
                 self.write_color(color);
@@ -134,7 +139,17 @@ impl Camera {
         println!("Done");
     }
 
-    fn ray_color(&self, r: &Ray, world: &HittableList, random_generator: &mut ThreadRng) -> Rgb {
+    fn ray_color(
+        &self,
+        r: &Ray,
+        world: &HittableList,
+        random_generator: &mut ThreadRng,
+        depth: usize,
+    ) -> Rgb {
+        if depth == 0 {
+            return Rgb::new(0.0, 0.0, 0.0);
+        }
+
         match world.hit(r, 0.0, INFINITY) {
             Some(hit_record) => {
                 let v = Vec3::random_unit_on_hemisphere(random_generator, hit_record.normal);
@@ -145,6 +160,7 @@ impl Camera {
                     },
                     world,
                     random_generator,
+                    depth - 1,
                 ))
             }
             _ => {
