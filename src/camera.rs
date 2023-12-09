@@ -156,16 +156,10 @@ impl Camera {
 
         match world.hit(r, self.float_correction, INFINITY) {
             Some(hit_record) => {
-                let v = Vec3::random_unit_vector(random_generator) + hit_record.normal;
-                0.5 * Rgb::from(self.ray_color(
-                    &Ray {
-                        origin: hit_record.intersection,
-                        direction: v,
-                    },
-                    world,
-                    random_generator,
-                    depth - 1,
-                ))
+                let (ray, color) = hit_record
+                    .material
+                    .scatter(r, &hit_record, random_generator);
+                Rgb::from(self.ray_color(&ray, world, random_generator, depth - 1)) * color
             }
             _ => {
                 let unit_dir = r.dir().unit_vector();
@@ -176,10 +170,10 @@ impl Camera {
     }
 
     fn write_color(&mut self, color: Rgb) {
-        let color_desaturated = ((1.0 / self.samples_per_pixel as f64) * color).to_gamma();
-        self.cache.push((color_desaturated.r * 255.0) as u8);
-        self.cache.push((color_desaturated.g * 255.0) as u8);
-        self.cache.push((color_desaturated.b * 255.0) as u8);
+        let color_desaturated = (color / self.samples_per_pixel).to_gamma() * 255.0;
+        self.cache.push(color_desaturated.r as u8);
+        self.cache.push(color_desaturated.g as u8);
+        self.cache.push(color_desaturated.b as u8);
     }
 
     fn random_sample_square(&self, random_generator: &mut ThreadRng) -> Point {

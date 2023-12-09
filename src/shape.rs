@@ -1,12 +1,15 @@
 use crate::{
     hittable::{HitRecord, Hittable},
+    material::Material,
     ray::Ray,
     vec3::{Point, Vec3},
 };
+use std::rc::Rc;
 
 pub struct Sphere {
     pub center: Point,
     pub radius: f64,
+    pub material: Rc<dyn Material>,
 }
 
 impl Hittable for Sphere {
@@ -36,6 +39,7 @@ impl Hittable for Sphere {
             t: root,
             normal: Vec3::new(0.0, 0.0, 0.0),
             out_facing: false,
+            material: self.material.clone(),
         };
 
         tmp.set_outside_normal(ray, outside_normal);

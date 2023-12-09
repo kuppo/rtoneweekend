@@ -1,4 +1,8 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
+
+use rand::rngs::ThreadRng;
+
+use crate::{hittable::HitRecord, ray::Ray, vec3::Vec3};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Rgb {
@@ -53,6 +57,18 @@ impl Mul<Rgb> for f64 {
     }
 }
 
+impl Mul for Rgb {
+    type Output = Rgb;
+
+    fn mul(self, rhs: Rgb) -> Self::Output {
+        Rgb {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+        }
+    }
+}
+
 impl Add for Rgb {
     type Output = Rgb;
 
@@ -77,14 +93,77 @@ impl Sub for Rgb {
     }
 }
 
+impl Div<usize> for Rgb {
+    type Output = Rgb;
+
+    fn div(self, rhs: usize) -> Self::Output {
+        Rgb {
+            r: self.r / (rhs as f64),
+            g: self.g / (rhs as f64),
+            b: self.b / (rhs as f64),
+        }
+    }
+}
+
 /// The trait represents the material of the shape. It will return the scattered ray and its color.
 pub trait Material {
     fn scatter(
         &self,
         ray_in: &Ray,
-        hit_record: HitRecord,
+        hit_record: &HitRecord,
         random_generator: &mut ThreadRng,
     ) -> (Ray, Rgb);
+}
+
+pub struct Lambertian {
+    pub albedo: Rgb,
+}
+
+impl Material for Lambertian {
+    fn scatter(
+        &self,
+        _: &Ray,
+        hit_record: &HitRecord,
+        random_generator: &mut ThreadRng,
+    ) -> (Ray, Rgb) {
+        let mut scatter_direction = hit_record.normal + Vec3::random_unit_vector(random_generator);
+        if scatter_direction.near_zero() {
+            scatter_direction = hit_record.normal;
+        }
+
+        (
+            Ray {
+                origin: hit_record.intersection,
+                direction: scatter_direction,
+            },
+            self.albedo,
+        )
+    }
+}
+
+pub struct Metal {
+    pub albedo: Rgb,
+    pub fuzz: f64,
+}
+
+impl Material for Metal {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        random_generator: &mut ThreadRng,
+    ) -> (Ray, Rgb) {
+        let reflect = ray_in.dir().unit_vector().reflect(hit_record.normal);
+        let fuzz_factor = self.fuzz.clamp(0.0, 1.0);
+
+        (
+            Ray {
+                origin: hit_record.intersection,
+                direction: reflect + fuzz_factor * Vec3::random_unit_vector(random_generator),
+            },
+            self.albedo,
+        )
+    }
 }
 
 #[cfg(test)]
@@ -99,6 +178,14 @@ mod tests {
     }
 
     #[test]
+    fn test_mul_rgb() {
+        let c1 = Rgb::new(1.0, 2.0, 5.0);
+        let c2 = Rgb::new(4.0, 4.0, 4.0) * c1;
+
+        assert!(c2.r == 4.0 && c2.g == 8.0 && c2.b == 20.0);
+    }
+
+    #[test]
     fn test_right_mul() {
         let c1 = Rgb::white() * 0.2;
 
@@ -110,6 +197,13 @@ mod tests {
         let c2 = 0.2 * Rgb::white();
 
         assert!(c2.r == 0.2 && c2.g == 0.2 && c2.b == 0.2);
+    }
+
+    #[test]
+    fn test_div_usize() {
+        let c2 = Rgb::new(4.0, 4.0, 4.0) / 2;
+
+        assert!(c2.r == 2.0 && c2.g == 2.0 && c2.b == 2.0);
     }
 
     #[test]
