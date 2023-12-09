@@ -19,6 +19,14 @@ impl Rgb {
             b: 1.0,
         }
     }
+
+    pub fn to_gamma(self) -> Rgb {
+        Rgb {
+            r: self.r.sqrt(),
+            g: self.g.sqrt(),
+            b: self.b.sqrt(),
+        }
+    }
 }
 
 impl Mul<f64> for Rgb {
@@ -110,5 +118,12 @@ mod tests {
         let c3 = c1 - c2;
 
         assert!(c3.r == 0.0 && c3.g == 1.0 && c3.b == 4.0);
+    }
+
+    #[test]
+    fn test_to_gamma() {
+        let c1 = Rgb::new(4.0, 4.0, 4.0).to_gamma();
+
+        assert!(c1.r == 2.0 && c1.g == 2.0 && c1.b == 2.0);
     }
 }

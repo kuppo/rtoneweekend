@@ -176,7 +176,7 @@ impl Camera {
     }
 
     fn write_color(&mut self, color: Rgb) {
-        let color_desaturated = color * (1.0 / self.samples_per_pixel as f64);
+        let color_desaturated = ((1.0 / self.samples_per_pixel as f64) * color).to_gamma();
         self.cache.push((color_desaturated.r * 255.0) as u8);
         self.cache.push((color_desaturated.g * 255.0) as u8);
         self.cache.push((color_desaturated.b * 255.0) as u8);
