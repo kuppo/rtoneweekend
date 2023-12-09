@@ -77,6 +77,16 @@ impl Sub for Rgb {
     }
 }
 
+/// The trait represents the material of the shape. It will return the scattered ray and its color.
+pub trait Material {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: HitRecord,
+        random_generator: &mut ThreadRng,
+    ) -> (Ray, Rgb);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
