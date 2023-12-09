@@ -33,9 +33,7 @@ fn main() {
         Rc::new(Sphere {
             origin: Point::new(0.0, 0.0, -1.0),
             radius: 0.5,
-            material: Rc::new(Lambertian {
-                albedo: Rgb::new(0.7, 0.3, 0.3),
-            }),
+            material: Rc::new(Dieletric { ir: 1.6 }),
         }),
         Rc::new(Sphere {
             origin: Point::new(1.0, 0.0, -1.0),

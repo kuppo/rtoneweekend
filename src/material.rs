@@ -177,11 +177,20 @@ impl Material for Dieletric {
         } else {
             self.ir
         };
-        let refract = ray_in.dir().unit_vector().refract(hit_record.normal, ir);
+
+        let unit_dir = ray_in.dir().unit_vector();
+        let cos_theta = -unit_dir.dot(hit_record.normal);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let bouncing_vec = match (ir * sin_theta) > 1.0 {
+            true => unit_dir.reflect(hit_record.normal),
+            false => unit_dir.refract(hit_record.normal, ir, cos_theta),
+        };
+
         (
             Ray {
                 origin: hit_record.intersection,
-                direction: refract,
+                direction: bouncing_vec,
             },
             Rgb::white(),
         )
