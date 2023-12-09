@@ -109,7 +109,11 @@ impl Camera {
                 let mut color = Rgb::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     color = color
-                        + self.ray_color(&self.get_ray(pixel_center, random_generator), &world);
+                        + self.ray_color(
+                            &self.get_ray(pixel_center, random_generator),
+                            &world,
+                            random_generator,
+                        );
                 }
                 self.write_color(color);
             }
@@ -130,9 +134,19 @@ impl Camera {
         println!("Done");
     }
 
-    fn ray_color(&self, r: &Ray, world: &HittableList) -> Rgb {
+    fn ray_color(&self, r: &Ray, world: &HittableList, random_generator: &mut ThreadRng) -> Rgb {
         match world.hit(r, 0.0, INFINITY) {
-            Some(hit_record) => (0.5 * (hit_record.normal + Vec3::new(1.0, 1.0, 1.0))).into(),
+            Some(hit_record) => {
+                let v = Vec3::random_unit_on_hemisphere(random_generator, hit_record.normal);
+                0.5 * Rgb::from(self.ray_color(
+                    &Ray {
+                        origin: hit_record.intersection,
+                        direction: v,
+                    },
+                    world,
+                    random_generator,
+                ))
+            }
             _ => {
                 let unit_dir = r.dir().unit_vector();
                 let a = 0.5 * (unit_dir.j + 1.0);

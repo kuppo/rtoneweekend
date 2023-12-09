@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use rand::{rngs::ThreadRng, Rng};
+
 use crate::material::Rgb;
 
 #[derive(Copy, Clone, Debug)]
@@ -13,6 +15,28 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(i: f64, j: f64, k: f64) -> Vec3 {
         Vec3 { i, j, k }
+    }
+
+    pub fn random_unit_vector(random_generator: &mut ThreadRng) -> Vec3 {
+        loop {
+            let p = Vec3 {
+                i: random_generator.gen_range(-1.0..1.0),
+                j: random_generator.gen_range(-1.0..1.0),
+                k: random_generator.gen_range(-1.0..1.0),
+            };
+            if p.length() <= 1.0 {
+                return p.unit_vector();
+            }
+        }
+    }
+
+    pub fn random_unit_on_hemisphere(random_generator: &mut ThreadRng, normal: Vec3) -> Vec3 {
+        let v = Vec3::random_unit_vector(random_generator);
+        if v.dot(normal) > 0.0 {
+            return v;
+        } else {
+            return -v;
+        }
     }
 
     pub fn dot(&self, rhs: Vec3) -> f64 {
