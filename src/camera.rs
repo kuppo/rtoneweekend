@@ -156,7 +156,7 @@ impl Camera {
 
         match world.hit(r, self.float_correction, INFINITY) {
             Some(hit_record) => {
-                let v = Vec3::random_unit_on_hemisphere(random_generator, hit_record.normal);
+                let v = Vec3::random_unit_vector(random_generator) + hit_record.normal;
                 0.5 * Rgb::from(self.ray_color(
                     &Ray {
                         origin: hit_record.intersection,
