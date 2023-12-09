@@ -77,6 +77,13 @@ impl Vec3 {
     pub fn reflect(self, normal: Vec3) -> Vec3 {
         self - 2.0 * self.dot(normal) * normal
     }
+
+    pub fn refract(self, normal: Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = normal.dot(-self);
+        let v_out_perp = etai_over_etat * (self + cos_theta * normal);
+        let v_out_parp = -(1.0 - v_out_perp.length_pow2()).sqrt() * normal;
+        v_out_parp + v_out_perp
+    }
 }
 
 pub type Point = Vec3;

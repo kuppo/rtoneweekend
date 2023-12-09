@@ -166,6 +166,28 @@ impl Material for Metal {
     }
 }
 
+pub struct Dieletric {
+    pub ir: f64, // index of refraction
+}
+
+impl Material for Dieletric {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord, _: &mut ThreadRng) -> (Ray, Rgb) {
+        let ir = if hit_record.out_facing {
+            1.0 / self.ir
+        } else {
+            self.ir
+        };
+        let refract = ray_in.dir().unit_vector().refract(hit_record.normal, ir);
+        (
+            Ray {
+                origin: hit_record.intersection,
+                direction: refract,
+            },
+            Rgb::white(),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

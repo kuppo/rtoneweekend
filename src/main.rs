@@ -1,7 +1,7 @@
 use rtoneweekend::{
     camera::{Camera, CameraConfig},
     hittable::Hittable,
-    material::{Lambertian, Metal, Rgb},
+    material::{Dieletric, Lambertian, Metal, Rgb},
     shape::Sphere,
     vec3::Point,
 };
@@ -28,10 +28,7 @@ fn main() {
         Rc::new(Sphere {
             origin: Point::new(-1.0, 0.0, -1.0),
             radius: 0.5,
-            material: Rc::new(Metal {
-                albedo: Rgb::new(0.8, 0.8, 0.8),
-                fuzz: 0.3,
-            }),
+            material: Rc::new(Dieletric { ir: 1.5 }),
         }),
         Rc::new(Sphere {
             origin: Point::new(0.0, 0.0, -1.0),
@@ -45,7 +42,7 @@ fn main() {
             radius: 0.5,
             material: Rc::new(Metal {
                 albedo: Rgb::new(0.8, 0.6, 0.2),
-                fuzz: 0.0,
+                fuzz: 1.0,
             }),
         }),
     ];
