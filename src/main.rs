@@ -1,8 +1,12 @@
+use std::{f64::INFINITY, rc::Rc};
+
 use image::EncodableLayout;
 use indicatif::ProgressBar;
 use rtoneweekend::{
+    hittable::{Hittable, HittableList},
     material::Rgb,
     ray::Ray,
+    shape::Sphere,
     vec3::{Point, Vec3},
 };
 
@@ -41,11 +45,23 @@ fn main() {
     let mut cache: Vec<u8> = vec![];
     cache.reserve(width * height * 3);
 
+    // world
+    let world: Vec<Rc<dyn Hittable>> = vec![
+        Rc::new(Sphere {
+            origin: Point::new(0.0, 0.0, -1.0),
+            radius: 0.5,
+        }),
+        Rc::new(Sphere {
+            origin: Point::new(0.0, -1000.5, -1.0),
+            radius: 1000.0,
+        }),
+    ];
+
     for i in 0..height {
         for j in 0..width {
             let pixel_center = pixel00loc + j as f64 * delta_u + i as f64 * delta_v;
             let ray_direction = pixel_center - camera_center;
-            let color = ray_color(&Ray::new(camera_center, ray_direction));
+            let color = ray_color(&Ray::new(camera_center, ray_direction), &world);
             write_color(&color, &mut cache);
         }
         bar.inc(1);
@@ -65,35 +81,19 @@ fn main() {
     println!("Done");
 }
 
-fn ray_color(r: &Ray) -> Rgb {
-    let t = hit_sphere(r, Point::new(0.0, 0.0, -1.0), 0.5);
-
-    if t > 0.0 {
-        let n = (r.at(t) - Point::new(0.0, 0.0, -1.0)).unit_vector();
-        return (0.5 * Rgb::new(n.i + 1.0, n.j + 1.0, n.k + 1.0)).into();
+fn ray_color(r: &Ray, world: &HittableList) -> Rgb {
+    match world.hit(r, 0.0, INFINITY) {
+        Some(hit_record) => (0.5 * (hit_record.normal + Vec3::new(1.0, 1.0, 1.0))).into(),
+        _ => {
+            let unit_dir = r.dir().unit_vector();
+            let a = 0.5 * (unit_dir.j + 1.0);
+            (1.0 - a) * Rgb::white() + a * Rgb::new(0.5, 0.7, 1.0)
+        }
     }
-
-    let unit_dir = r.dir().unit_vector();
-    let a = 0.5 * (unit_dir.j + 1.0);
-    (1.0 - a) * Rgb::white() + a * Rgb::new(0.5, 0.7, 1.0)
-    // Rgb::new(0.0, 0.0, 0.0)
 }
 
 fn write_color(color: &Rgb, cache: &mut Vec<u8>) {
     cache.push((color.r * 255.0) as u8);
     cache.push((color.g * 255.0) as u8);
     cache.push((color.b * 255.0) as u8);
-}
-
-fn hit_sphere(ray: &Ray, center: Point, radius: f64) -> f64 {
-    let ac = ray.origin() - center;
-    let a = ray.dir().dot(ray.dir());
-    let b = 2.0 * ac.dot(ray.dir());
-    let c = ac.dot(ac) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant < 0.0 {
-        return -1.0;
-    } else {
-        (-b - discriminant.sqrt()) / (2.0 * a)
-    }
 }
