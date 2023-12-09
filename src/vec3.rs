@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+use crate::material::Rgb;
+
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
     pub i: f64,
@@ -52,6 +54,16 @@ impl Default for Point {
             i: 0.0,
             j: 0.0,
             k: 0.0,
+        }
+    }
+}
+
+impl Into<Rgb> for Vec3 {
+    fn into(self) -> Rgb {
+        Rgb {
+            r: self.i,
+            g: self.j,
+            b: self.k,
         }
     }
 }
@@ -211,5 +223,13 @@ mod tests {
         let v2 = v1.unit_vector();
 
         assert!(v2.i == 4.0 / 9.0 && v2.j == 4.0 / 9.0 && v2.k == 7.0 / 9.0);
+    }
+
+    #[test]
+    fn test_into() {
+        let v1 = Vec3::new(4.0, 4.0, 7.0);
+        let rgb: Rgb = v1.into();
+
+        assert!(rgb.r == 4.0 && rgb.g == 4.0 && rgb.b == 7.0);
     }
 }
