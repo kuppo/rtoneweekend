@@ -7,6 +7,7 @@ use rtoneweekend::{
 use std::rc::Rc;
 
 fn main() {
+    let mut random_generator = rand::thread_rng();
     let mut camera = Camera::create(CameraConfig {
         width: 800,
         ..Default::default()
@@ -24,5 +25,5 @@ fn main() {
         }),
     ];
 
-    camera.render(&world);
+    camera.render(&world, &mut random_generator);
 }

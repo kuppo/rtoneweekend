@@ -8,12 +8,14 @@ use crate::{
 };
 use image::EncodableLayout;
 use indicatif::ProgressBar;
+use rand::{rngs::ThreadRng, Rng};
 use std::f64::INFINITY;
 
 pub struct CameraConfig {
     pub aspect_ratio: f64,
     pub width: usize,
     pub viewport_height: f64,
+    pub samples_per_pixel: usize,
 }
 
 impl Default for CameraConfig {
@@ -22,6 +24,7 @@ impl Default for CameraConfig {
             aspect_ratio: 16.0 / 9.0,
             width: 800,
             viewport_height: 2.0,
+            samples_per_pixel: 10,
         }
     }
 }
@@ -42,6 +45,7 @@ pub struct Camera {
     pixel00loc: Point,
     indicator_bar: ProgressBar,
     cache: Vec<u8>,
+    samples_per_pixel: usize,
 }
 
 impl Camera {
@@ -92,17 +96,22 @@ impl Camera {
             pixel00loc,
             indicator_bar,
             cache,
+            samples_per_pixel: config.samples_per_pixel,
         }
     }
 
-    pub fn render(&mut self, world: &HittableList) {
+    pub fn render(&mut self, world: &HittableList, random_generator: &mut ThreadRng) {
         for i in 0..self.height {
             for j in 0..self.width {
                 let pixel_center =
                     self.pixel00loc + j as f64 * self.delta_u + i as f64 * self.delta_v;
-                let ray_direction = pixel_center - self.camera_center;
-                let color = self.ray_color(&Ray::new(self.camera_center, ray_direction), &world);
-                self.write_color(&color);
+
+                let mut color = Rgb::new(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    color = color
+                        + self.ray_color(&self.get_ray(pixel_center, random_generator), &world);
+                }
+                self.write_color(color);
             }
             self.indicator_bar.inc(1);
         }
@@ -132,9 +141,23 @@ impl Camera {
         }
     }
 
-    fn write_color(&mut self, color: &Rgb) {
-        self.cache.push((color.r * 255.0) as u8);
-        self.cache.push((color.g * 255.0) as u8);
-        self.cache.push((color.b * 255.0) as u8);
+    fn write_color(&mut self, color: Rgb) {
+        let color_desaturated = color * (1.0 / self.samples_per_pixel as f64);
+        self.cache.push((color_desaturated.r * 255.0) as u8);
+        self.cache.push((color_desaturated.g * 255.0) as u8);
+        self.cache.push((color_desaturated.b * 255.0) as u8);
+    }
+
+    fn random_sample_square(&self, random_generator: &mut ThreadRng) -> Point {
+        random_generator.gen_range(-0.5..0.5) * self.delta_u
+            + random_generator.gen_range(-0.5..0.5) * self.delta_v
+    }
+
+    fn get_ray(&self, pixel_center: Point, random_generator: &mut ThreadRng) -> Ray {
+        let random_point = self.random_sample_square(random_generator) + pixel_center;
+        Ray {
+            origin: self.camera_center,
+            direction: random_point - self.camera_center,
+        }
     }
 }
