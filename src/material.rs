@@ -126,10 +126,7 @@ impl Material for Lambertian {
         hit_record: &HitRecord,
         random_generator: &mut ThreadRng,
     ) -> (Ray, Rgb) {
-        let mut scatter_direction = hit_record.normal + Vec3::random_unit_vector(random_generator);
-        if scatter_direction.near_zero() {
-            scatter_direction = hit_record.normal;
-        }
+        let scatter_direction = hit_record.normal + Vec3::random_unit_vector(random_generator);
 
         (
             Ray {
