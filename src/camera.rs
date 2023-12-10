@@ -18,7 +18,9 @@ pub struct CameraConfig {
     pub max_depth: usize,
     pub float_correction: f64,
     pub vfov: f64, // vertical field of view, angle
-    pub focal_lenght: f64,
+    pub look_from: Point,
+    pub look_at: Point,
+    pub camera_vup: Vec3,
 }
 
 impl Default for CameraConfig {
@@ -30,7 +32,9 @@ impl Default for CameraConfig {
             max_depth: 20,
             float_correction: 0.0001,
             vfov: 90.0,
-            focal_lenght: 1.0,
+            look_from: Point::new(0.0, 0.0, 0.0),
+            look_at: Point::new(0.0, 0.0, 1.0),
+            camera_vup: Vec3::new(0.0, 1.0, 0.0),
         }
     }
 }
@@ -39,8 +43,6 @@ pub struct Camera {
     aspect_ratio: f64,
     width: usize,
     height: usize,
-    camera_center: Point,
-    focal_length: f64,
     viewport_height: f64,
     viewport_width: f64,
     viewport_u: Vec3,
@@ -55,34 +57,44 @@ pub struct Camera {
     max_depth: usize,
     float_correction: f64,
     vfov: f64,
+    look_from: Point,
+    look_at: Point,
+    camera_vup: Vec3,
+    camera_u: Vec3,
+    camera_v: Vec3,
+    camera_w: Vec3,
 }
 
 impl Camera {
     pub fn create(config: CameraConfig) -> Camera {
-        // camera position
-        let camera_center = Point::new(0.0, 0.0, 0.0);
-
         // image size
         let mut height = (config.width as f64 / config.aspect_ratio) as usize;
         height = if height < 1 { 1 } else { height };
 
         // View plane size
-        let viewport_height = 2.0 * config.focal_lenght * (config.vfov / 2.0).to_radians().tan();
+        let focal_length = (config.look_at - config.look_from).length();
+        let viewport_height = 2.0 * focal_length * (config.vfov / 2.0).to_radians().tan();
         let viewport_width = viewport_height * (config.width as f64 / height as f64);
 
+        // camera position
+        let camera_center = config.look_from;
+
+        // camear coordinate system
+        let camera_w = (config.look_from - config.look_at) / focal_length; // point at oppesite to looking direction
+        let camera_u = config.camera_vup.cross(camera_w).unit_vector();
+        let camera_v = camera_w.cross(camera_u).unit_vector();
+
         // view plan vectors
-        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
+        let viewport_u = viewport_width * camera_u;
+        let viewport_v = viewport_height * -camera_v;
 
         // delta viewport
         let delta_u = viewport_u / config.width as f64;
         let delta_v = viewport_v / height as f64;
 
         // upper corner
-        let viewport_upperleft = camera_center
-            - Vec3::new(0.0, 0.0, config.focal_lenght)
-            - viewport_u / 2.0
-            - viewport_v / 2.0;
+        let viewport_upperleft =
+            camera_center - focal_length * camera_w - viewport_u / 2.0 - viewport_v / 2.0;
 
         let pixel00loc = viewport_upperleft + 0.5 * (delta_u + delta_v);
 
@@ -95,8 +107,6 @@ impl Camera {
             aspect_ratio: config.aspect_ratio,
             width: config.width,
             height,
-            camera_center,
-            focal_length: config.focal_lenght,
             viewport_height,
             viewport_width,
             viewport_u,
@@ -111,6 +121,12 @@ impl Camera {
             max_depth: config.max_depth,
             float_correction: config.float_correction,
             vfov: config.vfov,
+            look_from: config.look_from,
+            look_at: config.look_at,
+            camera_vup: config.camera_vup,
+            camera_u,
+            camera_v,
+            camera_w,
         }
     }
 
@@ -190,8 +206,8 @@ impl Camera {
     fn get_ray(&self, pixel_center: Point, random_generator: &mut ThreadRng) -> Ray {
         let random_point = self.random_sample_square(random_generator) + pixel_center;
         Ray {
-            origin: self.camera_center,
-            direction: random_point - self.camera_center,
+            origin: self.look_from,
+            direction: random_point - self.look_from,
         }
     }
 }
