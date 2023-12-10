@@ -33,7 +33,7 @@ impl Hittable for Sphere {
             }
         }
         let intersection = ray.at(root);
-        let outside_normal = (intersection - self.origin).unit_vector();
+        let outside_normal = (intersection - self.center) / self.radius;
         let mut tmp = HitRecord {
             intersection,
             t: root,

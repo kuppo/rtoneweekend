@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Sub};
 
-use rand::rngs::ThreadRng;
+use rand::{rngs::ThreadRng, Rng};
 
 use crate::{hittable::HitRecord, ray::Ray, vec3::Vec3};
 
@@ -170,8 +170,21 @@ pub struct Dieletric {
     pub ir: f64, // index of refraction
 }
 
+impl Dieletric {
+    fn reflectance(ref_ix: f64, cos_theta: f64) -> f64 {
+        let mut r0 = (1.0 - ref_ix) / (1.0 + ref_ix);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cos_theta).powi(5)
+    }
+}
+
 impl Material for Dieletric {
-    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord, _: &mut ThreadRng) -> (Ray, Rgb) {
+    fn scatter(
+        &self,
+        ray_in: &Ray,
+        hit_record: &HitRecord,
+        random_generator: &mut ThreadRng,
+    ) -> (Ray, Rgb) {
         let ir = if hit_record.out_facing {
             1.0 / self.ir
         } else {
@@ -182,7 +195,9 @@ impl Material for Dieletric {
         let cos_theta = -unit_dir.dot(hit_record.normal);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-        let bouncing_vec = match (ir * sin_theta) > 1.0 {
+        let bouncing_vec = match (ir * sin_theta) > 1.0
+            || Dieletric::reflectance(ir, cos_theta) > random_generator.gen_range(0.0..1.0)
+        {
             true => unit_dir.reflect(hit_record.normal),
             false => unit_dir.refract(hit_record.normal, ir, cos_theta),
         };

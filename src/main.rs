@@ -19,24 +19,29 @@ fn main() {
     // world
     let world: Vec<Rc<dyn Hittable>> = vec![
         Rc::new(Sphere {
-            origin: Point::new(0.0, -1000.5, -1.0),
+            center: Point::new(0.0, -1000.5, -1.0),
             radius: 1000.0,
             material: Rc::new(Lambertian {
                 albedo: Rgb::new(0.8, 0.8, 0.0),
             }),
         }),
         Rc::new(Sphere {
-            origin: Point::new(-1.0, 0.0, -1.0),
+            center: Point::new(-1.0, 0.0, -1.0),
             radius: 0.5,
             material: Rc::new(Dieletric { ir: 1.5 }),
         }),
         Rc::new(Sphere {
-            origin: Point::new(0.0, 0.0, -1.0),
+            center: Point::new(-1.0, 0.0, -1.0),
+            radius: -0.4,
+            material: Rc::new(Dieletric { ir: 1.5 }),
+        }),
+        Rc::new(Sphere {
+            center: Point::new(0.0, 0.0, -1.0),
             radius: 0.5,
             material: Rc::new(Dieletric { ir: 1.6 }),
         }),
         Rc::new(Sphere {
-            origin: Point::new(1.0, 0.0, -1.0),
+            center: Point::new(1.0, 0.0, -1.0),
             radius: 0.5,
             material: Rc::new(Metal {
                 albedo: Rgb::new(0.8, 0.6, 0.2),
