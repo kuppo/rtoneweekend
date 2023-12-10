@@ -11,7 +11,7 @@ use indicatif::ProgressBar;
 use rand::{rngs::ThreadRng, Rng};
 use std::f64::INFINITY;
 
-pub struct CameraConfig {
+pub struct CameraConfig<'a> {
     pub aspect_ratio: f64,
     pub width: usize,
     pub samples_per_pixel: usize,
@@ -23,10 +23,11 @@ pub struct CameraConfig {
     pub camera_vup: Vec3,
     pub defocus_angle: f64,
     pub focus_dist: f64,
+    pub save_path: &'a str,
 }
 
-impl Default for CameraConfig {
-    fn default() -> CameraConfig {
+impl<'a> Default for CameraConfig<'a> {
+    fn default() -> CameraConfig<'a> {
         CameraConfig {
             aspect_ratio: 16.0 / 9.0,
             width: 800,
@@ -39,11 +40,12 @@ impl Default for CameraConfig {
             camera_vup: Vec3::new(0.0, 1.0, 0.0),
             defocus_angle: 1.0,
             focus_dist: 10.0,
+            save_path: "/tmp/pic.png",
         }
     }
 }
 
-pub struct Camera {
+pub struct Camera<'a> {
     aspect_ratio: f64,
     width: usize,
     height: usize,
@@ -71,9 +73,10 @@ pub struct Camera {
     focus_dist: f64,
     defocus_u: Vec3,
     defocus_v: Vec3,
+    save_path: &'a str,
 }
 
-impl Camera {
+impl<'a> Camera<'a> {
     pub fn create(config: CameraConfig) -> Camera {
         // image size
         let mut height = (config.width as f64 / config.aspect_ratio) as usize;
@@ -143,6 +146,7 @@ impl Camera {
             focus_dist: config.focus_dist,
             defocus_u,
             defocus_v,
+            save_path: config.save_path,
         }
     }
 
@@ -171,7 +175,7 @@ impl Camera {
 
         println!("Saving file...");
         image::save_buffer(
-            "/tmp/pic.png",
+            self.save_path,
             self.cache.as_bytes(),
             self.width as u32,
             self.height as u32,
