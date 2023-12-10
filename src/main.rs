@@ -17,6 +17,8 @@ fn main() {
         look_from: Point::new(-2.0, 2.0, 1.0),
         look_at: Point::new(0.0, 0.0, -1.0),
         camera_vup: Vec3::new(0.0, 1.0, 0.0),
+        defocus_angle: 10.0,
+        focus_dist: 3.4,
         ..Default::default()
     });
 

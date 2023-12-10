@@ -21,6 +21,8 @@ pub struct CameraConfig {
     pub look_from: Point,
     pub look_at: Point,
     pub camera_vup: Vec3,
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
 }
 
 impl Default for CameraConfig {
@@ -35,6 +37,8 @@ impl Default for CameraConfig {
             look_from: Point::new(0.0, 0.0, 0.0),
             look_at: Point::new(0.0, 0.0, 1.0),
             camera_vup: Vec3::new(0.0, 1.0, 0.0),
+            defocus_angle: 1.0,
+            focus_dist: 10.0,
         }
     }
 }
@@ -63,6 +67,10 @@ pub struct Camera {
     camera_u: Vec3,
     camera_v: Vec3,
     camera_w: Vec3,
+    defocus_angle: f64,
+    focus_dist: f64,
+    defocus_u: Vec3,
+    defocus_v: Vec3,
 }
 
 impl Camera {
@@ -72,17 +80,21 @@ impl Camera {
         height = if height < 1 { 1 } else { height };
 
         // View plane size
-        let focal_length = (config.look_at - config.look_from).length();
-        let viewport_height = 2.0 * focal_length * (config.vfov / 2.0).to_radians().tan();
+        let viewport_height = 2.0 * config.focus_dist * (config.vfov / 2.0).to_radians().tan();
         let viewport_width = viewport_height * (config.width as f64 / height as f64);
 
         // camera position
         let camera_center = config.look_from;
 
         // camear coordinate system
-        let camera_w = (config.look_from - config.look_at) / focal_length; // point at oppesite to looking direction
+        let camera_w = (config.look_from - config.look_at).unit_vector(); // point at oppesite to looking direction
         let camera_u = config.camera_vup.cross(camera_w).unit_vector();
         let camera_v = camera_w.cross(camera_u).unit_vector();
+
+        // defocus disk
+        let defocus_radius = (config.defocus_angle / 2.0).to_radians().tan() * config.focus_dist;
+        let defocus_u = defocus_radius * camera_u;
+        let defocus_v = defocus_radius * camera_v;
 
         // view plan vectors
         let viewport_u = viewport_width * camera_u;
@@ -94,7 +106,7 @@ impl Camera {
 
         // upper corner
         let viewport_upperleft =
-            camera_center - focal_length * camera_w - viewport_u / 2.0 - viewport_v / 2.0;
+            camera_center - config.focus_dist * camera_w - viewport_u / 2.0 - viewport_v / 2.0;
 
         let pixel00loc = viewport_upperleft + 0.5 * (delta_u + delta_v);
 
@@ -127,6 +139,10 @@ impl Camera {
             camera_u,
             camera_v,
             camera_w,
+            defocus_angle: config.defocus_angle,
+            focus_dist: config.focus_dist,
+            defocus_u,
+            defocus_v,
         }
     }
 
@@ -205,9 +221,19 @@ impl Camera {
 
     fn get_ray(&self, pixel_center: Point, random_generator: &mut ThreadRng) -> Ray {
         let random_point = self.random_sample_square(random_generator) + pixel_center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.look_from
+        } else {
+            self.defocus_disk_sample(random_generator)
+        };
         Ray {
-            origin: self.look_from,
-            direction: random_point - self.look_from,
+            origin: ray_origin,
+            direction: random_point - ray_origin,
         }
+    }
+
+    fn defocus_disk_sample(&self, random_generator: &mut ThreadRng) -> Point {
+        let p = Vec3::random_in_unit_circle(random_generator);
+        self.look_from + p.i * self.defocus_u + p.j * self.defocus_v
     }
 }

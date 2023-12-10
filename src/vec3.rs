@@ -74,6 +74,19 @@ impl Vec3 {
         let v_out_parp = -(1.0 - v_out_perp.length_pow2()).sqrt() * normal;
         v_out_parp + v_out_perp
     }
+
+    pub fn random_in_unit_circle(random_generator: &mut ThreadRng) -> Vec3 {
+        loop {
+            let p = Vec3::new(
+                random_generator.gen_range(-1.0..1.0),
+                random_generator.gen_range(-1.0..1.0),
+                0.0,
+            );
+            if p.length() < 1.0 {
+                return p;
+            }
+        }
+    }
 }
 
 pub type Point = Vec3;
