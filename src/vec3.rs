@@ -30,15 +30,6 @@ impl Vec3 {
         }
     }
 
-    pub fn random_unit_on_hemisphere(random_generator: &mut ThreadRng, normal: Vec3) -> Vec3 {
-        let v = Vec3::random_unit_vector(random_generator);
-        if v.dot(normal) > 0.0 {
-            return v;
-        } else {
-            return -v;
-        }
-    }
-
     pub fn dot(&self, rhs: Vec3) -> f64 {
         self.i * rhs.i + self.j * rhs.j + self.k * rhs.k
     }
