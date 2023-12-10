@@ -14,10 +14,11 @@ use std::f64::INFINITY;
 pub struct CameraConfig {
     pub aspect_ratio: f64,
     pub width: usize,
-    pub viewport_height: f64,
     pub samples_per_pixel: usize,
     pub max_depth: usize,
     pub float_correction: f64,
+    pub vfov: f64, // vertical field of view, angle
+    pub focal_lenght: f64,
 }
 
 impl Default for CameraConfig {
@@ -25,10 +26,11 @@ impl Default for CameraConfig {
         CameraConfig {
             aspect_ratio: 16.0 / 9.0,
             width: 800,
-            viewport_height: 2.0,
             samples_per_pixel: 10,
             max_depth: 20,
             float_correction: 0.0001,
+            vfov: 90.0,
+            focal_lenght: 1.0,
         }
     }
 }
@@ -52,32 +54,35 @@ pub struct Camera {
     samples_per_pixel: usize,
     max_depth: usize,
     float_correction: f64,
+    vfov: f64,
 }
 
 impl Camera {
     pub fn create(config: CameraConfig) -> Camera {
         // camera position
         let camera_center = Point::new(0.0, 0.0, 0.0);
-        let focal_length = 1.0;
 
         // image size
         let mut height = (config.width as f64 / config.aspect_ratio) as usize;
         height = if height < 1 { 1 } else { height };
 
         // View plane size
-        let viewport_width = config.viewport_height * (config.width as f64 / height as f64);
+        let viewport_height = 2.0 * config.focal_lenght * (config.vfov / 2.0).to_radians().tan();
+        let viewport_width = viewport_height * (config.width as f64 / height as f64);
 
         // view plan vectors
         let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v = Vec3::new(0.0, -config.viewport_height, 0.0);
+        let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
 
         // delta viewport
         let delta_u = viewport_u / config.width as f64;
         let delta_v = viewport_v / height as f64;
 
         // upper corner
-        let viewport_upperleft =
-            camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let viewport_upperleft = camera_center
+            - Vec3::new(0.0, 0.0, config.focal_lenght)
+            - viewport_u / 2.0
+            - viewport_v / 2.0;
 
         let pixel00loc = viewport_upperleft + 0.5 * (delta_u + delta_v);
 
@@ -91,8 +96,8 @@ impl Camera {
             width: config.width,
             height,
             camera_center,
-            focal_length,
-            viewport_height: config.viewport_height,
+            focal_length: config.focal_lenght,
+            viewport_height,
             viewport_width,
             viewport_u,
             viewport_v,
@@ -105,6 +110,7 @@ impl Camera {
             samples_per_pixel: config.samples_per_pixel,
             max_depth: config.max_depth,
             float_correction: config.float_correction,
+            vfov: config.vfov,
         }
     }
 
